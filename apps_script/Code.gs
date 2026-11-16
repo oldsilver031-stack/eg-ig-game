@@ -21,6 +21,16 @@ function sheet_(name) {
   return ss.getSheetByName(name) || ss.insertSheet(name);
 }
 
+/** 정답표 시트: 이름이 key인 시트, 없으면 A1이 'file'인 첫 시트(CSV를 그대로 불러온 경우). */
+function keySheet_() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const named = ss.getSheetByName('key');
+  if (named) return named;
+  const found = ss.getSheets().find(sh => String(sh.getRange(1, 1).getValue()) === 'file');
+  if (found) return found;
+  throw new Error('정답표 시트(key)가 없습니다');
+}
+
 function json_(obj) {
   return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON);
 }
@@ -56,7 +66,7 @@ function doPost(e) {
   try {
     const d = JSON.parse(e.postData.contents);
     const key = {};
-    const ks = sheet_('key');
+    const ks = keySheet_();
     if (ks.getLastRow() > 1) {
       ks.getRange(2, 1, ks.getLastRow() - 1, 2).getValues().forEach(r => { key[String(r[0])] = String(r[1]); });
     }
